@@ -1,56 +1,58 @@
-# AI Task List pour iCUE
+**English** | [Français](README.fr.md)
 
-AI Task List affiche les tâches en cours et les résultats non lus des assistants IA sur le CORSAIR XENEON EDGE. Codex, Work et ChatGPT sont pris en charge par l’adaptateur intégré lorsque leur état est visible dans l’application de bureau. D’autres clients peuvent publier leurs propres tâches selon le [format JSON documenté](docs/providers.md).
+# AI Task List for iCUE
 
-La ligne grise indique l’activité, le numéro du tour et sa durée. Le grand chrono reprend le temps de l’objectif lorsqu’il existe, ou le cumul de traitement de la dernière demande. Une tâche terminée reste visible jusqu’à ce que sa source cesse de la signaler comme non lue. Une ligne fixe sous la liste affiche les pourcentages du quota Codex / Work renvoyés pour le compte connecté.
+AI Task List displays active tasks and unread results from AI assistants on the CORSAIR XENEON EDGE. The built-in adapter supports Codex, Work, and ChatGPT whenever their state is available to the desktop app. Other clients can publish their own tasks through the [documented JSON format](docs/en/providers.md).
 
-## Télécharger le widget
+The gray line shows the current activity, turn number, and duration. The large timer uses goal time when available, or the processing time accumulated since the latest user request. A completed task remains visible until its source no longer reports it as unread. A fixed footer shows the usage percentage for each Codex / Work quota window returned for the connected account.
 
-- [AI Task List 2.1.0 pour iCUE](https://raw.githubusercontent.com/mindofillusion/AI-Task-List/main/downloads/AI-Task-List-2.1.0.icuewidget)
-- [Guide d’installation et d’utilisation du widget](docs/widget.md)
+## Download the widget
 
-Le fichier `.icuewidget` s’importe directement dans iCUE. Pour alimenter l’affichage, démarrez le collecteur ou fournissez un fichier compatible au chemin indiqué dans le guide.
+- [AI Task List 2.1.0 for iCUE](https://raw.githubusercontent.com/mindofillusion/AI-Task-List/main/downloads/AI-Task-List-2.1.0.icuewidget)
+- [Widget installation and usage guide](docs/en/widget.md)
 
-## Installer sous Windows
+Import the `.icuewidget` file directly into iCUE. To provide data to the widget, start the collector or publish a compatible file at the path described in the guide.
 
-Il faut iCUE 5.52 ou ultérieur et un XENEON EDGE. Pour suivre Codex, ouvrez l’application de bureau sous le même compte Windows. Le paquet contient le binaire officiel Node.js et les scripts du collecteur.
+## Install on Windows
 
-1. Extrayez l’archive Windows dans un dossier et vérifiez les signatures de l’installateur et du collecteur avec PowerShell.
+You need iCUE 5.52 or later and a XENEON EDGE. To monitor Codex, open the desktop app under the same Windows account. The package includes the official Node.js binary and the collector scripts.
+
+1. Extract the Windows archive, then verify the installer and collector signatures in PowerShell.
 
    ```powershell
    Get-AuthenticodeSignature .\Install-AI-Task-Collector.ps1, .\app\node.exe
    ```
 
-   Une distribution signée doit indiquer `Valid` pour les deux fichiers. Le binaire Node.js porte la signature de l’OpenJS Foundation. Les archives nommées `unsigned-preview` sont des builds de développement dont le script d’installation est non signé.
+   A signed distribution must report `Valid` for both files. The Node.js binary is signed by the OpenJS Foundation. Archives named `unsigned-preview` are development builds with an unsigned installer.
 
-2. Dans PowerShell, exécutez `.\Install-AI-Task-Collector.ps1`. Le collecteur démarre pour le compte courant et se relance à l’ouverture de session si Windows permet de créer le raccourci de démarrage. L’installateur attend une pression sur Entrée avant de se fermer ; ajoutez `-NoPause` pour une installation automatisée. Si l’installateur signale que le raccourci a échoué, réexécutez la commande pour démarrer le collecteur dans une nouvelle session. Ajoutez `-NoCodex` si vous voulez utiliser uniquement des fournisseurs externes.
-3. Importez `AI-Task-List-2.1.0.icuewidget` dans iCUE. Autorisez l’accès à `<Home>/AI-Task-List/tasks.json` lorsque iCUE le demande, puis ajoutez **AI Task List** à votre écran.
+2. Run `.\Install-AI-Task-Collector.ps1` in PowerShell. The collector starts for the current user and runs again at sign-in when Windows allows the installer to create its startup shortcut. The installer waits for Enter before closing; add `-NoPause` for an unattended installation. If startup shortcut creation fails, rerun the command to start the collector in a new session. Add `-NoCodex` to use only external providers.
+3. Import `AI-Task-List-2.1.0.icuewidget` into iCUE. Allow access to `<Home>/AI-Task-List/tasks.json` when prompted, then add **AI Task List** to the display.
 
-Le widget se rafraîchit à la prochaine mise à jour du fichier. Si le collecteur est indisponible, vérifiez la date de modification de `%USERPROFILE%\AI-Task-List\tasks.json` et l’autorisation de fichier dans iCUE.
+The widget refreshes after the next file update. If the collector is unavailable, check the modification time of `%USERPROFILE%\AI-Task-List\tasks.json` and the file permission granted in iCUE.
 
-Pour désinstaller le collecteur, exécutez `.\Install-AI-Task-Collector.ps1 -Uninstall`. Les fichiers des fournisseurs sont conservés dans `sources`. Retirez ensuite le widget de l’écran iCUE.
+To uninstall the collector, run `.\Install-AI-Task-Collector.ps1 -Uninstall`. Provider files in `sources` are preserved. Remove the widget from the iCUE display separately.
 
-## Clients détectés et localisation
+## Desktop client detection and localization
 
-Lorsque la liste est vide, le widget distingue un client ouvert sans tâche d’une machine sur laquelle aucun client de bureau configuré ne tourne. Les tâches et résultats non lus restent prioritaires. La configuration se trouve dans `%LOCALAPPDATA%\AI-Task-List\app\clients.json` après installation. Chaque entrée contient un identifiant, un libellé et les noms de processus Windows correspondants ; ChatGPT / Codex Desktop (`ChatGPT.exe`) est fourni par défaut. Ajoutez une entrée au tableau `clients`, puis redémarrez le collecteur pour prendre en charge un autre client lourd.
+When the task list is empty, the widget distinguishes an open client with no active task from a computer where no configured desktop client is running. Active tasks and unread results always take priority over this empty state. After installation, client detection is configured in `%LOCALAPPDATA%\AI-Task-List\app\clients.json`. Each entry contains an ID, a label, and one or more Windows process names. ChatGPT / Codex Desktop (`ChatGPT.exe`) is included by default. Add an entry to the `clients` array, then restart the collector to support another desktop client.
 
-L’interface suit la langue fournie par iCUE. L’anglais et le français sont inclus dans `widget\translation.json`. Pour ajouter une traduction, dupliquez l’objet `en`, remplacez son code de langue et traduisez les valeurs sans modifier les clés. Le build refuse une langue incomplète. Si le service de traduction iCUE est absent, le français est utilisé pour une locale française et l’anglais dans les autres cas.
+The interface follows the language supplied by iCUE. English and French are included in `widget\translation.json`. To add a translation, duplicate the `en` object, replace its language code, and translate the values without changing the keys. The build rejects incomplete locales. If the iCUE translation service is unavailable, the widget uses French for a French locale and English otherwise.
 
-## Données et permissions
+## Data and permissions
 
-Le collecteur s’exécute avec les droits du compte Windows courant. L’adaptateur Codex ouvre le catalogue et les bases SQLite en lecture seule. Toutes les cinq minutes, il interroge aussi le service de quotas via le serveur d’application de Codex, qui utilise la connexion au compte existante. Le fichier de sortie contient les identifiants et titres des tâches, leurs états, leur provenance, le modèle, l’effort, les chronos et les compteurs de quota disponibles. Le widget dispose d’une permission pour ce fichier précis. La collecte des tâches reste locale. La lecture du quota utilise la connexion réseau de Codex. Le collecteur et le widget fonctionnent sans port d’écoute ni clé API supplémentaire.
+The collector runs with the current Windows user's permissions. The Codex adapter opens the catalog and SQLite databases in read-only mode. Every five minutes, it also requests quota data through the Codex app server, which reuses the existing account session. The output file contains task IDs and titles, state, source, model, reasoning effort, available timers, and quota counters. The widget receives permission to read this one file. Task collection remains local; quota retrieval uses Codex network access. Neither the collector nor the widget opens a listening port or requires an additional API key.
 
-## Construire et signer
+## Build and sign
 
-La construction nécessite le binaire Windows officiel de Node.js 26 ou ultérieur et le CLI Corsair `icuewidget` dans le PATH. Avec le CLI 0.5 ou ultérieur, la validation couvre aussi les permissions. Le build valide le widget, exécute les tests et place les fichiers dans `dist/`. Il joint la licence de la version de Node.js utilisée. Pour fournir cette licence depuis un fichier local, utilisez le paramètre `-NodeLicense`.
+Building requires the official Node.js 26 or later Windows binary and the Corsair `icuewidget` CLI on `PATH`. With CLI 0.5 or later, validation also covers permissions. The build validates the widget, runs the tests, writes artifacts to `dist/`, and includes the license for the bundled Node.js version. Use `-NodeLicense` to supply the license from a local file.
 
 ```powershell
 .\build.ps1
-.\build.ps1 -SigningThumbprint 'EMPREINTE_DU_CERTIFICAT'
+.\build.ps1 -SigningThumbprint 'CERTIFICATE_THUMBPRINT'
 ```
 
-La seconde commande nécessite un certificat de signature de code approuvé par Windows dans le magasin personnel de l’utilisateur et sa clé privée. Le build vérifie la signature officielle de Node.js, inscrit les SHA-256 du binaire et des scripts du collecteur dans l’installateur, puis signe et vérifie l’installateur. Une erreur de signature interrompt le build signé.
+The second command requires a Windows-trusted code-signing certificate and its private key in the current user's personal certificate store. The build verifies the official Node.js signature, records SHA-256 hashes for the binary and collector scripts in the installer, then signs and verifies the installer. Any signature error stops a signed build.
 
-- [Plugin File System d’iCUE](https://docs.elgato.com/icue/widgets/references/plugins/file-system-provider/)
-- [Créer un paquet iCUE](https://docs.elgato.com/icue/widgets/)
-- [Signature Authenticode dans PowerShell](https://learn.microsoft.com/powershell/module/microsoft.powershell.security/set-authenticodesignature)
+- [iCUE File System plugin](https://docs.elgato.com/icue/widgets/references/plugins/file-system-provider/)
+- [Create an iCUE widget package](https://docs.elgato.com/icue/widgets/)
+- [Authenticode signing in PowerShell](https://learn.microsoft.com/powershell/module/microsoft.powershell.security/set-authenticodesignature)

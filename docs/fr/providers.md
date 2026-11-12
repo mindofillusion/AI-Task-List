@@ -1,3 +1,5 @@
+[English](../en/providers.md) | **Français**
+
 # Ajouter un client IA
 
 Un fournisseur est un composant qui connaît l’état des tâches d’un client IA. Il publie un instantané UTF-8 dans `%USERPROFILE%\AI-Task-List\sources\<fournisseur>.json`. Le collecteur relit les instantanés une fois par seconde, fusionne les tâches et écrit le fichier que lit iCUE.

@@ -89,6 +89,7 @@ $installer = Join-Path $bundle 'Install-AI-Task-Collector.ps1'
 [IO.File]::WriteAllText($installer, $installerSource, $utf8)
 Sign-PackageFile $installer
 Copy-Item -LiteralPath (Join-Path $root 'README.md') -Destination $bundle -Force
+Copy-Item -LiteralPath (Join-Path $root 'README.fr.md') -Destination $bundle -Force
 Copy-Item -LiteralPath (Join-Path $root 'LICENSE') -Destination $bundle -Force
 $nodeNotice = Join-Path $bundle 'NODE-LICENSE.txt'
 if ($NodeLicense) {
@@ -104,5 +105,5 @@ if ($NodeLicense) {
 
 $flavor = if ($SigningThumbprint) { 'signed' } else { 'unsigned-preview' }
 $archive = Join-Path $dist "AI-Task-List-$($manifest.version)-windows-$flavor.zip"
-Compress-Archive -LiteralPath $widgetPackage,$appDir,$installer,(Join-Path $bundle 'README.md'),(Join-Path $bundle 'LICENSE'),$nodeNotice -DestinationPath $archive -Force
+Compress-Archive -LiteralPath $widgetPackage,$appDir,$installer,(Join-Path $bundle 'README.md'),(Join-Path $bundle 'README.fr.md'),(Join-Path $bundle 'LICENSE'),$nodeNotice -DestinationPath $archive -Force
 Get-FileHash -LiteralPath $archive -Algorithm SHA256

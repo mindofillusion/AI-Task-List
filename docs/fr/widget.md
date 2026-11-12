@@ -1,3 +1,5 @@
+[English](../en/widget.md) | **Français**
+
 # AI Task List sur le CORSAIR XENEON EDGE
 
 AI Task List affiche les tâches en cours et les résultats non lus. Il actualise l’écran lorsque le collecteur met à jour le fichier local `%USERPROFILE%\AI-Task-List\tasks.json`.
@@ -7,7 +9,7 @@ AI Task List affiche les tâches en cours et les résultats non lus. Il actualis
 1. Vérifiez que le XENEON EDGE apparaît dans iCUE sous Windows. Le widget nécessite iCUE 5.52 ou ultérieur.
 2. Téléchargez le [fichier AI-Task-List-2.1.0.icuewidget](https://raw.githubusercontent.com/mindofillusion/AI-Task-List/main/downloads/AI-Task-List-2.1.0.icuewidget).
 3. Dans iCUE, sélectionnez le XENEON EDGE, ouvrez la bibliothèque de widgets et utilisez le bouton **+** pour importer le fichier. Autorisez iCUE à lire `<Home>/AI-Task-List/tasks.json` lorsque la demande s’affiche. Ajoutez **AI Task List** à une page de l’écran. [Guide d’importation Corsair](https://www.corsair.com/uk/en/explorer/diy-builder/accessories/how-to-install-a-widget/)
-4. Démarrez le collecteur avec les [instructions du projet](../README.md#installer-sous-windows). Pour un essai depuis les sources, ouvrez PowerShell à la racine du dépôt avec Node.js 26 ou ultérieur et lancez la commande ci-dessous. Gardez la fenêtre ouverte pendant l’essai.
+4. Démarrez le collecteur avec les [instructions du projet](../../README.fr.md#installer-sous-windows). Pour un essai depuis les sources, ouvrez PowerShell à la racine du dépôt avec Node.js 26 ou ultérieur et lancez la commande ci-dessous. Gardez la fenêtre ouverte pendant l’essai.
 
 ```powershell
 node .\collector\main.cjs
