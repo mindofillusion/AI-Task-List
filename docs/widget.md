@@ -5,7 +5,7 @@ AI Task List affiche les tâches en cours et les résultats non lus. Il actualis
 ## Installer le widget
 
 1. Vérifiez que le XENEON EDGE apparaît dans iCUE sous Windows. Le widget nécessite iCUE 5.52 ou ultérieur.
-2. Téléchargez le [fichier AI-Task-List-2.0.0.icuewidget](https://github.com/mindofillusion/AI-Task-List/releases/download/v2.0.0/AI-Task-List-2.0.0.icuewidget).
+2. Téléchargez le [fichier AI-Task-List-2.0.0.icuewidget](https://raw.githubusercontent.com/mindofillusion/AI-Task-List/main/downloads/AI-Task-List-2.0.0.icuewidget).
 3. Dans iCUE, sélectionnez le XENEON EDGE, ouvrez la bibliothèque de widgets et utilisez le bouton **+** pour importer le fichier. Autorisez iCUE à lire `<Home>/AI-Task-List/tasks.json` lorsque la demande s’affiche. Ajoutez **AI Task List** à une page de l’écran. [Guide d’importation Corsair](https://www.corsair.com/uk/en/explorer/diy-builder/accessories/how-to-install-a-widget/)
 4. Démarrez le collecteur avec les [instructions du projet](../README.md#installer-sous-windows). Pour un essai depuis les sources, ouvrez PowerShell à la racine du dépôt avec Node.js 26 ou ultérieur et lancez la commande ci-dessous. Gardez la fenêtre ouverte pendant l’essai.
 
@@ -14,6 +14,8 @@ node .\collector\main.cjs
 ```
 
 Pour suivre les tâches Codex, Work ou ChatGPT, ouvrez l’application de bureau dans la même session Windows. Une tâche lancée ailleurs devient visible dès que son état est disponible dans cette application.
+
+Le paquet a passé la validation de l’outil Corsair. L’essai sur l’écran physique reste à effectuer.
 
 ## Lire et personnaliser l’affichage
 

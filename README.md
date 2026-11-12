@@ -8,7 +8,7 @@ La ligne grise indique l’activité, le numéro du tour et sa durée. Le grand 
 
 ## Télécharger le widget
 
-- [AI Task List 2.0.0 pour iCUE](https://github.com/mindofillusion/AI-Task-List/releases/download/v2.0.0/AI-Task-List-2.0.0.icuewidget)
+- [AI Task List 2.0.0 pour iCUE](https://raw.githubusercontent.com/mindofillusion/AI-Task-List/main/downloads/AI-Task-List-2.0.0.icuewidget)
 - [Guide d’installation et d’utilisation du widget](docs/widget.md)
 
 Le fichier `.icuewidget` s’importe directement dans iCUE. Pour alimenter l’affichage, démarrez le collecteur ou fournissez un fichier compatible au chemin indiqué dans le guide.
