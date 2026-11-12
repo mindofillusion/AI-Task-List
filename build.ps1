@@ -9,6 +9,16 @@ $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 $widget = Join-Path $root 'widget'
 $manifest = Get-Content -LiteralPath (Join-Path $widget 'manifest.json') -Raw | ConvertFrom-Json
+$translations = Get-Content -LiteralPath (Join-Path $widget 'translation.json') -Raw | ConvertFrom-Json
+$englishKeys = @($translations.en.translation.PSObject.Properties.Name)
+if ($englishKeys.Count -eq 0) { throw 'English translations are required.' }
+foreach ($locale in $translations.PSObject.Properties) {
+  if (-not $locale.Value.translation) { throw "Locale $($locale.Name) must contain a translation object." }
+  $localeKeys = @($locale.Value.translation.PSObject.Properties.Name)
+  foreach ($key in $englishKeys) {
+    if ($localeKeys -notcontains $key) { throw "Locale $($locale.Name) is missing translation key: $key" }
+  }
+}
 $dist = Join-Path $root 'dist'
 $bundle = Join-Path $dist ('AI-Task-List-' + $manifest.version)
 $intermediate = Join-Path $dist 'build'
@@ -55,7 +65,7 @@ if ($nodeSignature.Status -ne 'Valid' -or $nodeSignature.SignerCertificate.Subje
 }
 $runner = Join-Path $appDir 'node.exe'
 Copy-Item -LiteralPath $nodeSource -Destination $runner -Force
-Copy-Item -LiteralPath (Join-Path $root 'collector/main.cjs'),(Join-Path $root 'collector/codex.cjs') -Destination $appDir -Force
+Copy-Item -LiteralPath (Join-Path $root 'collector/main.cjs'),(Join-Path $root 'collector/codex.cjs'),(Join-Path $root 'collector/clients.cjs'),(Join-Path $root 'collector/clients.json'),(Join-Path $root 'collector/usage.cjs') -Destination $appDir -Force
 if ((& $runner (Join-Path $appDir 'main.cjs') --version) -ne $manifest.version -or $LASTEXITCODE -ne 0) {
   throw 'Bundled collector verification failed.'
 }
@@ -71,7 +81,7 @@ function Sign-PackageFile($file) {
   }
 }
 $installerSource = [IO.File]::ReadAllText((Join-Path $root 'installer/Install-AI-Task-Collector.ps1'))
-foreach ($entry in @{ NODE = 'node.exe'; MAIN = 'main.cjs'; CODEX = 'codex.cjs' }.GetEnumerator()) {
+foreach ($entry in @{ NODE = 'node.exe'; MAIN = 'main.cjs'; CODEX = 'codex.cjs'; CLIENTS_CODE = 'clients.cjs'; CLIENTS_CONFIG = 'clients.json'; USAGE = 'usage.cjs' }.GetEnumerator()) {
   $hash = (Get-FileHash -LiteralPath (Join-Path $appDir $entry.Value) -Algorithm SHA256).Hash
   $installerSource = $installerSource.Replace(('__{0}_SHA256__' -f $entry.Key), $hash)
 }

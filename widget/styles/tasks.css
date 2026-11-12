@@ -40,6 +40,8 @@ body {
 
 .sensors-container {
   box-sizing: border-box;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   height: 100%;
   padding: 0.25rem;
 }
@@ -49,11 +51,22 @@ body {
   display: grid;
   align-content: start;
   gap: 0.25rem;
-  height: 100%;
   overflow-y: auto;
   overflow-anchor: none;
   scrollbar-width: thin;
   scrollbar-color: #747b83 transparent;
+}
+
+.quota-footer {
+  margin-block-start: 0.2rem;
+  padding: 0.2rem 0.8rem;
+  border-radius: 0.45rem;
+  background: rgb(0 0 0 / 84%);
+  color: var(--text-color);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  text-align: center;
 }
 
 .sensor-value {

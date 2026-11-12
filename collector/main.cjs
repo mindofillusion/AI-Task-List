@@ -5,8 +5,10 @@ const os = require("node:os");
 const path = require("node:path");
 const { parseArgs } = require("node:util");
 const { collectTasks, resolvePaths } = require("./codex.cjs");
+const { createClientDetector } = require("./clients.cjs");
+const { readQuota, REFRESH_MS } = require("./usage.cjs");
 
-const VERSION = "2.0.0";
+const VERSION = "2.1.0";
 const SOURCE_TTL_MS = 30_000;
 const MAX_SOURCE_BYTES = 256 * 1024;
 const MAX_TASKS = 100;
@@ -63,14 +65,14 @@ function readExternalTasks(sourcesDir, now) {
   return tasks;
 }
 
-function createCollector(outputDir, codexPaths) {
+function createCollector(outputDir, codexPaths, detectClients = () => ({ clientState: "unknown", clients: [] })) {
   const sourcesDir = path.join(outputDir, "sources");
   const output = path.join(outputDir, "tasks.json");
   fs.mkdirSync(sourcesDir, { recursive: true });
   // Create the file once. Replacing it would invalidate an existing iCUE file watch.
   fs.closeSync(fs.openSync(output, "a"));
   let lastCodexSuccess = null;
-  return function publish(now = Date.now()) {
+  return function publish(now = Date.now(), quota = []) {
     let tasks = [];
     let codexAvailable = null;
     if (codexPaths) {
@@ -88,10 +90,14 @@ function createCollector(outputDir, codexPaths) {
     }
     tasks.push(...readExternalTasks(sourcesDir, now));
     const byId = new Map(tasks.map((task) => [task.id, task]));
+    const clientStatus = detectClients(now);
     const snapshot = {
       schemaVersion: 1,
       updatedAt: now,
       codexAvailable,
+      clientState: clientStatus.clientState,
+      clients: clientStatus.clients,
+      quota,
       tasks: [...byId.values()].slice(0, MAX_TASKS)
     };
     const bytes = Buffer.from(JSON.stringify(snapshot) + "\n");
@@ -106,7 +112,7 @@ function createCollector(outputDir, codexPaths) {
   };
 }
 
-function main() {
+async function main() {
   const { values } = parseArgs({ options: {
     "output-dir": { type: "string", default: path.join(os.homedir(), "AI-Task-List") },
     "codex-dir": { type: "string" },
@@ -118,19 +124,38 @@ function main() {
     console.log(VERSION);
     return;
   }
-  const paths = values["no-codex"] ? null : resolvePaths(values["codex-dir"]);
-  const publish = createCollector(values["output-dir"], paths);
+  const codexDirectory = values["codex-dir"] || process.env.CODEX_HOME;
+  const paths = values["no-codex"] ? null : resolvePaths(codexDirectory);
+  const publish = createCollector(values["output-dir"], paths, createClientDetector());
   publish();
-  if (!values.once) {
-    setInterval(() => {
-      try {
-        publish();
-      } catch {
-        console.error("Unable to update tasks.json. Retrying.");
-      }
-    }, 1_000);
+  let quota = [];
+  const refreshQuota = async () => {
+    quota = await readQuota(codexDirectory).catch(() => []);
+  };
+  if (values.once) {
+    if (paths) {
+      await refreshQuota();
+      publish(Date.now(), quota);
+    }
+    return;
   }
+  if (paths) {
+    void refreshQuota();
+    setInterval(refreshQuota, REFRESH_MS);
+  }
+  setInterval(() => {
+    try {
+      publish(Date.now(), quota);
+    } catch {
+      console.error("Unable to update tasks.json. Retrying.");
+    }
+  }, 1_000);
 }
 
-if (require.main === module) main();
+if (require.main === module) {
+  main().catch(() => {
+    console.error("Unable to start AI Task Collector.");
+    process.exitCode = 1;
+  });
+}
 module.exports = { createCollector };

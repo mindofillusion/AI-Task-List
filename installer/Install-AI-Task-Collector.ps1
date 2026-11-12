@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
   [switch]$Uninstall,
-  [switch]$NoCodex
+  [switch]$NoCodex,
+  [switch]$NoPause
 )
 
 $ErrorActionPreference = 'Stop'
@@ -11,11 +12,15 @@ $runner = Join-Path $appDir 'node.exe'
 $entrypoint = Join-Path $appDir 'main.cjs'
 $dataDir = Join-Path ([Environment]::GetFolderPath('UserProfile')) 'AI-Task-List'
 $snapshot = Join-Path $dataDir 'tasks.json'
-$shortcutPath = Join-Path ([Environment]::GetFolderPath('Startup')) 'AI Task Collector.lnk'
+$shortcutPath = Join-Path ([Environment]::GetFolderPath('Startup')) 'AI Task List Collector.lnk'
+$previousShortcutPath = Join-Path ([Environment]::GetFolderPath('Startup')) 'AI Task Collector.lnk'
 $payloadHashes = @{
   'node.exe' = '__NODE_SHA256__'
   'main.cjs' = '__MAIN_SHA256__'
   'codex.cjs' = '__CODEX_SHA256__'
+  'clients.cjs' = '__CLIENTS_CODE_SHA256__'
+  'clients.json' = '__CLIENTS_CONFIG_SHA256__'
+  'usage.cjs' = '__USAGE_SHA256__'
 }
 $payloadDir = Join-Path $PSScriptRoot 'app'
 
@@ -39,11 +44,15 @@ Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" |
 
 if ($Uninstall) {
   $appFiles = $payloadHashes.Keys | ForEach-Object { Join-Path $appDir $_ }
-  foreach ($file in (@($shortcutPath, $snapshot) + $appFiles)) {
+  foreach ($file in (@($shortcutPath, $previousShortcutPath, $snapshot) + $appFiles)) {
     if (Test-Path -LiteralPath $file -PathType Leaf) { Remove-Item -LiteralPath $file }
   }
   Write-Host 'AI Task Collector removed. Provider files are preserved.'
   return
+}
+
+if (Test-Path -LiteralPath $previousShortcutPath -PathType Leaf) {
+  Remove-Item -LiteralPath $previousShortcutPath -Force -ErrorAction SilentlyContinue
 }
 
 New-Item -ItemType Directory -Path $appDir -Force | Out-Null
@@ -57,20 +66,23 @@ if ($NoCodex) { $collectorArguments += '--no-codex' }
 $collector = Start-Process -FilePath $runner -ArgumentList ($collectorArguments + '--once') -WindowStyle Hidden -PassThru -Wait
 if ($collector.ExitCode -ne 0) { throw "Collector startup failed ($($collector.ExitCode))." }
 
-$shell = New-Object -ComObject WScript.Shell
-$shortcut = $shell.CreateShortcut($shortcutPath)
-$shortcut.TargetPath = Join-Path $PSHOME 'powershell.exe'
-if (-not (Test-Path -LiteralPath $shortcut.TargetPath)) {
-  $shortcut.TargetPath = (Get-Command powershell.exe).Source
+try {
+  $shell = New-Object -ComObject WScript.Shell
+  $shortcut = $shell.CreateShortcut($shortcutPath)
+  $shortcut.TargetPath = $runner
+  $shortcut.Arguments = '"' + $entrypoint + '"' + $(if ($NoCodex) { ' --no-codex' } else { '' })
+  $shortcut.WorkingDirectory = $installDir
+  $shortcut.Description = 'Starts the local AI task collector for iCUE'
+  $shortcut.WindowStyle = 7
+  $shortcut.Save()
+  if (-not (Test-Path -LiteralPath $shortcutPath -PathType Leaf)) {
+    throw 'The shortcut did not appear in the startup folder.'
+  }
+} catch {
+  Write-Warning "The collector will run for this session, but automatic startup could not be configured. $($_.Exception.Message)"
 }
-$quotedRunner = $runner.Replace("'", "''")
-$quotedArguments = ($collectorArguments -join ' ').Replace("'", "''")
-$startupCommand = "Start-Process -FilePath '$quotedRunner' -ArgumentList '$quotedArguments' -WindowStyle Hidden"
-$encodedStartup = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($startupCommand))
-$shortcut.Arguments = "-NoProfile -NonInteractive -WindowStyle Hidden -EncodedCommand $encodedStartup"
-$shortcut.WorkingDirectory = $installDir
-$shortcut.Description = 'Start the local AI task collector for iCUE'
-$shortcut.WindowStyle = 7
-$shortcut.Save()
 Start-Process -FilePath $runner -ArgumentList $collectorArguments -WindowStyle Hidden
 Write-Host "AI Task Collector installed for the current user. Snapshot: $snapshot"
+if (-not $NoPause -and [Environment]::UserInteractive) {
+  [void](Read-Host 'Installation terminee. Appuyez sur Entree pour fermer / Installation complete. Press Enter to close')
+}

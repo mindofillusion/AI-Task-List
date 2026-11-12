@@ -1,0 +1,11 @@
+{
+  "clients": [
+    {
+      "id": "openai-desktop",
+      "label": "ChatGPT / Codex Desktop",
+      "processNames": [
+        "ChatGPT.exe"
+      ]
+    }
+  ]
+}

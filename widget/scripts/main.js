@@ -1,39 +1,44 @@
-const APP_VERSION = "2.0.0";
+const APP_VERSION = "2.1.0";
 const SNAPSHOT_PATH = "{Home}/AI-Task-List/tasks.json";
 const SNAPSHOT_TIMEOUT = 15_000;
 const ACTIVE_ICON = "images/task-list.png";
 
-const fallbackLabels = {
-  Analysis: "Analyse",
-  Command: "Commande",
-  "Completed · unread": "Terminé · non lu",
-  Context: "Contexte",
-  Files: "Fichiers",
-  Image: "Image",
-  "In progress": "En cours",
-  "No active task": "Aucune tâche active",
-  "No unread result": "Aucun résultat non lu",
-  "Untitled task": "Tâche sans titre",
-  Other: "Autre",
-  "Unknown model": "Modèle inconnu",
-  "Unknown effort": "Effort inconnu",
-  Effort: "Effort",
-  Response: "Réponse",
-  Search: "Recherche",
-  "Waiting for collector": "Connexion au collecteur…",
-  "Collector unavailable": "Collecteur indisponible",
-  "Codex data unavailable": "Données Codex indisponibles",
-  Starting: "Démarrage",
-  "Sub-agent": "Sous-agent",
-  Tool: "Outil",
-  "Turn time": "Tour",
-  Waiting: "En attente",
-  min: "min"
+const fallbackTranslations = {
+  en: {
+    Analysis: "Analysis", Command: "Command", "Completed · unread": "Completed · unread",
+    Context: "Context", Files: "Files", Image: "Image", "In progress": "In progress",
+    "No desktop client": "No desktop client running", "No active task": "No active task",
+    "No unread result": "No unread result",
+    "Start configured client": "Start a configured desktop client to display its tasks",
+    "Untitled task": "Untitled task", Other: "Other", "Unknown model": "Unknown model",
+    "Unknown effort": "Unknown effort", "Codex / Work usage": "Codex / Work usage",
+    Effort: "Effort", Response: "Response", Search: "Search",
+    "Waiting for collector": "Connecting to collector…", "Collector unavailable": "Collector unavailable",
+    "Codex data unavailable": "Codex data unavailable", Starting: "Starting", "Sub-agent": "Sub-agent",
+    Tool: "Tool", "Turn time": "Turn", Waiting: "Waiting", min: "min", d: "d"
+  },
+  fr: {
+    Analysis: "Analyse", Command: "Commande", "Completed · unread": "Terminé · non lu",
+    Context: "Contexte", Files: "Fichiers", Image: "Image", "In progress": "En cours",
+    "No desktop client": "Aucun client de bureau actif", "No active task": "Aucune tâche active",
+    "No unread result": "Aucun résultat non lu",
+    "Start configured client": "Lancez un client de bureau configuré pour afficher ses tâches",
+    "Untitled task": "Tâche sans titre", Other: "Autre", "Unknown model": "Modèle inconnu",
+    "Unknown effort": "Effort inconnu", "Codex / Work usage": "Quota Codex / Work utilisé",
+    Effort: "Effort", Response: "Réponse", Search: "Recherche",
+    "Waiting for collector": "Connexion au collecteur…", "Collector unavailable": "Collecteur indisponible",
+    "Codex data unavailable": "Données Codex indisponibles", Starting: "Démarrage",
+    "Sub-agent": "Sous-agent", Tool: "Outil", "Turn time": "Tour", Waiting: "En attente",
+    min: "min", d: "j"
+  }
 };
 
+const browserLocale = String(navigator.language || "en").toLowerCase();
+const fallbackLocale = browserLocale.startsWith("fr") ? "fr" : "en";
+const fallbackLabels = fallbackTranslations[fallbackLocale];
 const labels = { ...fallbackLabels };
 const durationFormatter = typeof Intl.DurationFormat === "function"
-  ? new Intl.DurationFormat("en", { style: "narrow", secondsDisplay: "always" })
+  ? new Intl.DurationFormat(undefined, { style: "narrow", secondsDisplay: "always" })
   : null;
 const rowDataMap = new Map();
 const messageRowKey = Symbol("message");
@@ -59,6 +64,10 @@ async function translate(key) {
 }
 
 async function initTranslations() {
+  const translator = typeof tr === "function" ? tr : window.tr;
+  document.documentElement.lang = typeof translator === "function"
+    ? browserLocale.split("-")[0]
+    : fallbackLocale;
   await Promise.all(
     Object.keys(fallbackLabels).map(async (key) => {
       labels[key] = await translate(key);
@@ -217,10 +226,14 @@ function removeExtraRows(visibleKeys) {
   }
 }
 
-function renderTasks(tasks, codexAvailable) {
+function renderTasks(tasks, codexAvailable, clientState) {
   if (!Array.isArray(tasks) || tasks.length === 0) {
-    const subtitle = codexAvailable === false ? "Codex data unavailable" : "No unread result";
-    updateMessageRow(labels["No active task"], labels[subtitle]);
+    if (clientState === "stopped") {
+      updateMessageRow(labels["No desktop client"], labels["Start configured client"]);
+    } else {
+      const subtitle = codexAvailable === false ? "Codex data unavailable" : "No unread result";
+      updateMessageRow(labels["No active task"], labels[subtitle]);
+    }
     removeExtraRows(new Set([messageRowKey]));
   } else {
     const visibleKeys = new Set(tasks.map(({ id }) => id));
@@ -248,6 +261,26 @@ function renderTasks(tasks, codexAvailable) {
 function renderError() {
   updateMessageRow(labels["Collector unavailable"], `AI Task List · v${APP_VERSION}`, true);
   removeExtraRows(new Set([messageRowKey]));
+  renderQuota();
+}
+
+function quotaWindowLabel(minutes) {
+  if (minutes >= 2880 && minutes % 1440 === 0) return `${minutes / 1440} ${labels.d}`;
+  if (minutes % 60 === 0) return `${minutes / 60} h`;
+  return `${minutes} ${labels.min}`;
+}
+
+function renderQuota(windows, now = Date.now()) {
+  const footer = document.getElementById("quotaFooter");
+  const counters = Array.isArray(windows) ? windows.filter((quota) =>
+    Number.isFinite(quota?.usedPercent) && quota.usedPercent >= 0 &&
+    Number.isSafeInteger(quota.windowDurationMins) && quota.windowDurationMins > 0 &&
+    (!quota.resetsAt || quota.resetsAt * 1000 > now)
+  ).map(({ usedPercent, windowDurationMins }) =>
+    `${quotaWindowLabel(windowDurationMins)} ${usedPercent.toLocaleString()} %`
+  ) : [];
+  footer.hidden = counters.length === 0;
+  updateText(footer, footer.hidden ? "" : [labels["Codex / Work usage"], ...counters].join(" · "));
 }
 
 function armWatchdog() {
@@ -269,7 +302,8 @@ function acceptSnapshot(_filePath, content) {
   const age = Date.now() - payload?.updatedAt;
   if (payload?.schemaVersion !== 1 || !Number.isFinite(age) || age < -5_000 ||
       age > SNAPSHOT_TIMEOUT || !Array.isArray(payload.tasks)) return;
-  renderTasks(payload.tasks, payload.codexAvailable);
+  renderTasks(payload.tasks, payload.codexAvailable, payload.clientState);
+  renderQuota(payload.quota);
   armWatchdog();
 }
 
@@ -318,7 +352,7 @@ function applyBackground() {
 }
 
 function applyTextColor() {
-  document.getElementById("sensorsValuesList").style.setProperty("--text-color", String(property("textColor", "#FFFFFF")));
+  document.documentElement.style.setProperty("--text-color", String(property("textColor", "#FFFFFF")));
 }
 
 function onIcueDataUpdated() {

@@ -6,6 +6,8 @@ const os = require("node:os");
 const path = require("node:path");
 const { test } = require("node:test");
 const { createCollector } = require("../collector/main.cjs");
+const { detectConfiguredClients, readClientConfig } = require("../collector/clients.cjs");
+const { quotaWindows } = require("../collector/usage.cjs");
 
 test("combines fresh providers without exposing extra fields or replacing the watched file", (t) => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "ai-task-list-"));
@@ -42,4 +44,34 @@ test("combines fresh providers without exposing extra fields or replacing the wa
   assert.equal(publish(now + 35_002).tasks.length, 0);
   assert.equal(fs.statSync(snapshotFile).ino, inode);
   assert.equal(JSON.parse(fs.readFileSync(snapshotFile, "utf8")).tasks.length, 0);
+});
+
+test("detects configured desktop clients and publishes their state", (t) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "ai-task-list-clients-"));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const clients = readClientConfig(path.join(__dirname, "..", "collector", "clients.json"));
+  const running = detectConfiguredClients(clients, ["ChatGPT.exe", "node.exe"]);
+  const stopped = detectConfiguredClients(clients, ["node.exe"]);
+  assert.equal(running.clientState, "running");
+  assert.equal(running.clients[0].running, true);
+  assert.equal(stopped.clientState, "stopped");
+  assert.equal(stopped.clients[0].running, false);
+  const snapshot = createCollector(directory, null, () => stopped)(100_000);
+  assert.equal(snapshot.clientState, "stopped");
+  assert.equal(snapshot.clients[0].label, "ChatGPT / Codex Desktop");
+});
+
+test("publishes only the reported windows of the shared Codex quota", () => {
+  const weekly = { usedPercent: 20, windowDurationMins: 10080, resetsAt: 2_000_000_000 };
+  const short = { usedPercent: 0, windowDurationMins: 300, resetsAt: 1_999_999_000 };
+  assert.deepEqual(quotaWindows({ rateLimits: { limitId: "codex", primary: weekly } }), [weekly]);
+  assert.deepEqual(quotaWindows({
+    rateLimitsByLimitId: {
+      codex: { primary: { ...weekly, internal: "private" }, secondary: short },
+      other: { primary: { usedPercent: 70, windowDurationMins: 1440 } }
+    }
+  }), [short, weekly]);
+  assert.deepEqual(quotaWindows({
+    rateLimits: { limitId: "codex", primary: { usedPercent: 0, windowDurationMins: null } }
+  }), []);
 });
