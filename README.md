@@ -6,6 +6,13 @@ AI Task List affiche les tâches en cours et les résultats non lus des assistan
 
 La ligne grise indique l’activité, le numéro du tour et sa durée. Le grand chrono reprend le temps de l’objectif lorsqu’il existe, ou le cumul de traitement de la dernière demande. Une tâche terminée reste visible jusqu’à ce que sa source cesse de la signaler comme non lue. La capture montre la version précédente.
 
+## Télécharger le widget
+
+- [AI Task List 2.0.0 pour iCUE](https://github.com/mindofillusion/AI-Task-List/releases/download/v2.0.0/AI-Task-List-2.0.0.icuewidget)
+- [Guide d’installation et d’utilisation du widget](docs/widget.md)
+
+Le fichier `.icuewidget` s’importe directement dans iCUE. Pour alimenter l’affichage, démarrez le collecteur ou fournissez un fichier compatible au chemin indiqué dans le guide.
+
 ## Installer sous Windows
 
 Il faut iCUE 5.52 ou ultérieur et un XENEON EDGE. Pour suivre Codex, ouvrez l’application de bureau sous le même compte Windows. Le paquet contient le binaire officiel Node.js et les scripts du collecteur.
