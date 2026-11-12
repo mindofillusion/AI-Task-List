@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tr('AI Task List')</title>
+    <link rel="icon" type="image/png" href="images/task-list.png" />
+    <meta
+      name="x-icue-property"
+      content="textColor"
+      data-label="tr('Text Color')"
+      data-type="color"
+      data-default="'#FFFFFF'"
+    />
+    <meta
+      name="x-icue-property"
+      content="activityColor"
+      data-label="tr('Activity Color')"
+      data-type="color"
+      data-default="'#FF9421'"
+    />
+    <meta
+      name="x-icue-property"
+      content="backgroundColor"
+      data-label="tr('Background')"
+      data-type="color"
+      data-default="'#000000'"
+    />
+    <meta
+      name="x-icue-property"
+      content="backgroundMedia"
+      data-label="tr('Image')"
+      data-type="media-selector"
+      data-filters="['*.webm', '*.mp4', '*.mkv', '*.gif', '*.png', '*.jpg', '*.jpeg', '*.bmp', '*.ico']"
+    />
+    <meta
+      name="x-icue-property"
+      content="transparency"
+      data-label="tr('Widget Transparency')"
+      data-type="slider"
+      data-default="80"
+      data-min="0"
+      data-max="100"
+      data-step="1"
+      data-unit-label="'%'"
+    />
+    <script type="application/json" id="x-icue-groups">
+    [
+      {
+        "title": "tr('AI Task List Personalization')",
+        "properties": ["textColor", "activityColor", "backgroundColor", "backgroundMedia", "transparency"]
+      }
+    ]
+    </script>
+    <link rel="stylesheet" href="styles/tasks.css" />
+    <script type="text/javascript">
+      var icueEvents = {};
+      var pluginFilesystemproviderEvents = {};
+    </script>
+  </head>
+  <body>
+    <div class="widget-background">
+      <div id="media-background"></div>
+    </div>
+    <div class="sensors-container">
+      <div id="sensorsValuesList" class="sensors-values-list" aria-live="polite"></div>
+    </div>
+
+    <script type="module" src="scripts/main.js"></script>
+  </body>
+</html>

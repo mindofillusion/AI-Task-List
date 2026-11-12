@@ -1,0 +1,25 @@
+{
+  "author": "Pierre Chevalier",
+  "id": "fr.pierrechevalier.aitasklist",
+  "name": "AI Task List",
+  "description": "Tâches actives et résultats non lus de Codex et d’autres assistants, lus depuis un fichier local.",
+  "version": "2.0.0",
+  "preview_icon": "images/task-list.png",
+  "min_app_version": "5.52",
+  "min_framework_version": "1.9.0",
+  "required_plugins": ["widgetbuilder.filesystemprovider:FileSystem:1.0"],
+  "permissions": [
+    { "type": "file", "path": "<Home>/AI-Task-List/tasks.json" }
+  ],
+  "os": [
+    {
+      "platform": "windows"
+    }
+  ],
+  "supported_devices": [
+    {
+      "type": "dashboard_lcd"
+    }
+  ],
+  "interactive": true
+}
