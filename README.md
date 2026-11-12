@@ -6,6 +6,8 @@ AI Task List displays active tasks and unread results from AI assistants on the 
 
 The gray line shows the current activity, turn number, and duration. The large timer uses goal time when available, or the processing time accumulated since the latest user request. A completed task remains visible until its source no longer reports it as unread. A fixed footer shows the usage percentage for each Codex / Work quota window returned for the connected account.
 
+<img width="845" height="354" alt="image" src="https://github.com/user-attachments/assets/129c2cc7-db78-4abd-9285-db86a49ec94b" />
+
 ## Download the widget
 
 - [AI Task List 2.1.0 for iCUE](https://raw.githubusercontent.com/mindofillusion/AI-Task-List/main/downloads/AI-Task-List-2.1.0.icuewidget)
