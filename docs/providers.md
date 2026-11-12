@@ -38,4 +38,4 @@ Remplacez `updatedAt` par l’heure d’écriture en millisecondes Unix. Republi
 | `elapsedSeconds`, `requestElapsedSeconds`, `goalElapsedSeconds` | Entiers positifs ou nuls. Durées du tour, de la dernière demande et de l’objectif. Omettez les valeurs indisponibles. |
 | `requestTurnNumber` | Numéro du tour dans la dernière demande, à partir de 1. |
 
-Le collecteur copie uniquement les champs du tableau et expose au plus 100 tâches au widget. Le fournisseur calcule ses durées selon ce qu’il sait de l’activité. Pour tester une intégration sans lire les données Codex, lancez `AI-Task-Collector.exe --no-codex --once`.
+Le collecteur copie uniquement les champs du tableau et expose au plus 100 tâches au widget. Le fournisseur calcule ses durées selon ce qu’il sait de l’activité. Pour tester une intégration sans lire les données Codex, lancez `.\app\node.exe .\app\main.cjs --no-codex --once` depuis le paquet extrait.

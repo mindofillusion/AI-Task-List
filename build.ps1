@@ -46,19 +46,19 @@ try {
 Move-Item -LiteralPath $orderedPackage -Destination $widgetPackage -Force
 
 $utf8 = [Text.UTF8Encoding]::new($false)
-$adapter = [IO.File]::ReadAllText((Join-Path $root 'collector/codex.cjs'))
-$collector = [IO.File]::ReadAllText((Join-Path $root 'collector/main.cjs'))
-$adapterImport = 'const { collectTasks, resolvePaths } = require("./codex.cjs");'
-if (-not $collector.Contains($adapterImport)) { throw 'Collector adapter import changed.' }
-$inlinedAdapter = "const { collectTasks, resolvePaths } = (() => {`nconst module = { exports: {} };`n$adapter`nreturn module.exports;`n})();"
-$main = Join-Path $intermediate 'collector.cjs'
-[IO.File]::WriteAllText($main, $collector.Replace($adapterImport, $inlinedAdapter), $utf8)
-$binary = Join-Path $bundle 'AI-Task-Collector.exe'
-$configPath = Join-Path $intermediate 'sea-config.json'
-$config = @{ main = $main; output = $binary; disableExperimentalSEAWarning = $true }
-[IO.File]::WriteAllText($configPath, ($config | ConvertTo-Json -Compress), $utf8)
-& node --build-sea $configPath
-if ($LASTEXITCODE -ne 0) { throw 'Standalone collector build failed. Use Node.js 26 or later.' }
+$appDir = Join-Path $bundle 'app'
+New-Item -ItemType Directory -Path $appDir -Force | Out-Null
+$nodeSource = (Get-Command node.exe -ErrorAction Stop).Source
+$nodeSignature = Get-AuthenticodeSignature -LiteralPath $nodeSource
+if ($nodeSignature.Status -ne 'Valid' -or $nodeSignature.SignerCertificate.Subject -notmatch '(^|, )O=OpenJS Foundation(,|$)') {
+  throw 'Packaging requires the official Node.js Windows binary with a valid OpenJS Foundation signature.'
+}
+$runner = Join-Path $appDir 'node.exe'
+Copy-Item -LiteralPath $nodeSource -Destination $runner -Force
+Copy-Item -LiteralPath (Join-Path $root 'collector/main.cjs'),(Join-Path $root 'collector/codex.cjs') -Destination $appDir -Force
+if ((& $runner (Join-Path $appDir 'main.cjs') --version) -ne $manifest.version -or $LASTEXITCODE -ne 0) {
+  throw 'Bundled collector verification failed.'
+}
 
 if ($SigningThumbprint) {
   $certificate = Get-Item -LiteralPath "Cert:/CurrentUser/My/$SigningThumbprint"
@@ -70,19 +70,22 @@ function Sign-PackageFile($file) {
     if ($result.Status -ne 'Valid') { throw "Signature verification failed for $file ($($result.Status))." }
   }
 }
-Sign-PackageFile $binary
-if ((& $binary --version) -ne $manifest.version -or $LASTEXITCODE -ne 0) { throw 'Standalone collector verification failed.' }
-
 $installerSource = [IO.File]::ReadAllText((Join-Path $root 'installer/Install-AI-Task-Collector.ps1'))
-$binaryHash = (Get-FileHash -LiteralPath $binary -Algorithm SHA256).Hash
+foreach ($entry in @{ NODE = 'node.exe'; MAIN = 'main.cjs'; CODEX = 'codex.cjs' }.GetEnumerator()) {
+  $hash = (Get-FileHash -LiteralPath (Join-Path $appDir $entry.Value) -Algorithm SHA256).Hash
+  $installerSource = $installerSource.Replace(('__{0}_SHA256__' -f $entry.Key), $hash)
+}
 $installer = Join-Path $bundle 'Install-AI-Task-Collector.ps1'
-[IO.File]::WriteAllText($installer, $installerSource.Replace('__COLLECTOR_SHA256__', $binaryHash), $utf8)
+[IO.File]::WriteAllText($installer, $installerSource, $utf8)
 Sign-PackageFile $installer
 Copy-Item -LiteralPath (Join-Path $root 'README.md') -Destination $bundle -Force
 Copy-Item -LiteralPath (Join-Path $root 'LICENSE') -Destination $bundle -Force
 $nodeNotice = Join-Path $bundle 'NODE-LICENSE.txt'
 if ($NodeLicense) {
-  Copy-Item -LiteralPath $NodeLicense -Destination $nodeNotice -Force
+  $licensePath = (Resolve-Path -LiteralPath $NodeLicense).Path
+  if ($licensePath -ne $nodeNotice) {
+    Copy-Item -LiteralPath $licensePath -Destination $nodeNotice -Force
+  }
 } else {
   $nodeVersion = & node --version
   if ($nodeVersion -notmatch '^v\d+\.\d+\.\d+$') { throw 'Unexpected Node.js version.' }
@@ -91,5 +94,5 @@ if ($NodeLicense) {
 
 $flavor = if ($SigningThumbprint) { 'signed' } else { 'unsigned-preview' }
 $archive = Join-Path $dist "AI-Task-List-$($manifest.version)-windows-$flavor.zip"
-Compress-Archive -LiteralPath $widgetPackage,$binary,$installer,(Join-Path $bundle 'README.md'),(Join-Path $bundle 'LICENSE'),$nodeNotice -DestinationPath $archive -Force
+Compress-Archive -LiteralPath $widgetPackage,$appDir,$installer,(Join-Path $bundle 'README.md'),(Join-Path $bundle 'LICENSE'),$nodeNotice -DestinationPath $archive -Force
 Get-FileHash -LiteralPath $archive -Algorithm SHA256

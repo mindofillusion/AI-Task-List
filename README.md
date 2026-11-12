@@ -8,15 +8,15 @@ La ligne grise indique l’activité, le numéro du tour et sa durée. Le grand 
 
 ## Installer sous Windows
 
-Il faut iCUE 5.52 ou ultérieur et un XENEON EDGE. Pour suivre Codex, ouvrez l’application de bureau sous le même compte Windows. Le collecteur compilé embarque son environnement d’exécution.
+Il faut iCUE 5.52 ou ultérieur et un XENEON EDGE. Pour suivre Codex, ouvrez l’application de bureau sous le même compte Windows. Le paquet contient le binaire officiel Node.js et les scripts du collecteur.
 
 1. Extrayez l’archive Windows dans un dossier et vérifiez les signatures de l’installateur et du collecteur avec PowerShell.
 
    ```powershell
-   Get-AuthenticodeSignature .\Install-AI-Task-Collector.ps1, .\AI-Task-Collector.exe
+   Get-AuthenticodeSignature .\Install-AI-Task-Collector.ps1, .\app\node.exe
    ```
 
-   Une distribution signée doit indiquer `Valid` pour les deux fichiers et présenter l’éditeur attendu. Les archives nommées `unsigned-preview` sont des builds de développement.
+   Une distribution signée doit indiquer `Valid` pour les deux fichiers. Le binaire Node.js porte la signature de l’OpenJS Foundation. Les archives nommées `unsigned-preview` sont des builds de développement dont le script d’installation est non signé.
 
 2. Dans PowerShell, exécutez `.\Install-AI-Task-Collector.ps1`. Le collecteur démarre pour le compte courant et se relance à l’ouverture de session. Ajoutez `-NoCodex` si vous voulez utiliser uniquement des fournisseurs externes.
 3. Importez `AI-Task-List-2.0.0.icuewidget` dans iCUE. Autorisez l’accès à `<Home>/AI-Task-List/tasks.json` lorsque iCUE le demande, puis ajoutez **AI Task List** à votre écran.
@@ -31,14 +31,14 @@ Le collecteur s’exécute avec les droits du compte Windows courant. L’adapta
 
 ## Construire et signer
 
-La construction nécessite Node.js 26 ou ultérieur et le CLI Corsair `icuewidget` dans le PATH. Avec le CLI 0.5 ou ultérieur, la validation couvre aussi les permissions. Le build valide le widget, exécute les tests et place les fichiers dans `dist/`. Il joint la licence de la version de Node.js utilisée. Pour fournir cette licence depuis un fichier local, utilisez le paramètre `-NodeLicense`.
+La construction nécessite le binaire Windows officiel de Node.js 26 ou ultérieur et le CLI Corsair `icuewidget` dans le PATH. Avec le CLI 0.5 ou ultérieur, la validation couvre aussi les permissions. Le build valide le widget, exécute les tests et place les fichiers dans `dist/`. Il joint la licence de la version de Node.js utilisée. Pour fournir cette licence depuis un fichier local, utilisez le paramètre `-NodeLicense`.
 
 ```powershell
 .\build.ps1
 .\build.ps1 -SigningThumbprint 'EMPREINTE_DU_CERTIFICAT'
 ```
 
-La seconde commande nécessite un certificat de signature de code approuvé par Windows dans le magasin personnel de l’utilisateur et sa clé privée. Le build signe l’exécutable et l’installateur, vérifie leurs signatures et inscrit le SHA-256 de l’exécutable signé dans l’installateur. Une erreur de signature interrompt le build signé.
+La seconde commande nécessite un certificat de signature de code approuvé par Windows dans le magasin personnel de l’utilisateur et sa clé privée. Le build vérifie la signature officielle de Node.js, inscrit les SHA-256 du binaire et des scripts du collecteur dans l’installateur, puis signe et vérifie l’installateur. Une erreur de signature interrompt le build signé.
 
 - [Plugin File System d’iCUE](https://docs.elgato.com/icue/widgets/references/plugins/file-system-provider/)
 - [Créer un paquet iCUE](https://docs.elgato.com/icue/widgets/)
