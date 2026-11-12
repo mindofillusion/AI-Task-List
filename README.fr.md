@@ -6,6 +6,8 @@ AI Task List affiche les tâches en cours et les résultats non lus des assistan
 
 La ligne grise indique l’activité, le numéro du tour et sa durée. Le grand chrono reprend le temps de l’objectif lorsqu’il existe, ou le cumul de traitement de la dernière demande. Une tâche terminée reste visible jusqu’à ce que sa source cesse de la signaler comme non lue. Une ligne fixe sous la liste affiche les pourcentages du quota Codex / Work renvoyés pour le compte connecté.
 
+<img width="845" height="354" alt="image" src="https://github.com/user-attachments/assets/129c2cc7-db78-4abd-9285-db86a49ec94b" /> <img width="845" height="349" alt="image" src="https://github.com/user-attachments/assets/25e46e2f-986c-4d89-8ed1-597afdc07f4d" />
+
 ## Télécharger le widget
 
 - [AI Task List 2.1.0 pour iCUE](https://raw.githubusercontent.com/mindofillusion/AI-Task-List/main/downloads/AI-Task-List-2.1.0.icuewidget)
