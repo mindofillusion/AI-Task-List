@@ -80,17 +80,94 @@ function Sign-PackageFile($file) {
     if ($result.Status -ne 'Valid') { throw "Signature verification failed for $file ($($result.Status))." }
   }
 }
+$tray = Join-Path $appDir 'AI-Task-Collector.exe'
+$iconPath = Join-Path $intermediate 'collector.ico'
+Add-Type -AssemblyName System.Drawing
+$artwork = [Drawing.Image]::FromFile((Join-Path $widget 'images/task-list.png'))
+try {
+  $frames = foreach ($size in @(16, 20, 24, 32, 48)) {
+    $bitmap = [Drawing.Bitmap]::new($size, $size)
+    $graphics = [Drawing.Graphics]::FromImage($bitmap)
+    $png = [IO.MemoryStream]::new()
+    try {
+      $graphics.Clear([Drawing.Color]::FromArgb(23, 68, 85))
+      $graphics.InterpolationMode = [Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+      $inset = [int][Math]::Floor($size / 12)
+      $extent = $size - 2 * $inset
+      $graphics.DrawImage($artwork, [Drawing.Rectangle]::new($inset, $inset, $extent, $extent))
+      $bitmap.Save($png, [Drawing.Imaging.ImageFormat]::Png)
+      [pscustomobject]@{ Size = $size; Bytes = $png.ToArray() }
+    } finally {
+      $png.Dispose()
+      $graphics.Dispose()
+      $bitmap.Dispose()
+    }
+  }
+} finally { $artwork.Dispose() }
+$iconStream = [IO.File]::Create($iconPath)
+$iconWriter = [IO.BinaryWriter]::new($iconStream)
+try {
+  $iconWriter.Write([uint16]0)
+  $iconWriter.Write([uint16]1)
+  $iconWriter.Write([uint16]$frames.Count)
+  $offset = 6 + 16 * $frames.Count
+  foreach ($frame in $frames) {
+    $iconWriter.Write([byte]$frame.Size)
+    $iconWriter.Write([byte]$frame.Size)
+    $iconWriter.Write([uint16]0)
+    $iconWriter.Write([uint16]1)
+    $iconWriter.Write([uint16]32)
+    $iconWriter.Write([uint32]$frame.Bytes.Length)
+    $iconWriter.Write([uint32]$offset)
+    $offset += $frame.Bytes.Length
+  }
+  foreach ($frame in $frames) { $iconWriter.Write([byte[]]$frame.Bytes) }
+} finally {
+  $iconWriter.Dispose()
+}
+$csc = Join-Path ([System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory()) 'csc.exe'
+if (-not (Test-Path -LiteralPath $csc -PathType Leaf)) {
+  $csc = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
+}
+& $csc /nologo /codepage:65001 /target:winexe /optimize+ "/out:$tray" "/win32icon:$iconPath" "/resource:$iconPath,Collector.ico" /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Web.Extensions.dll (Join-Path $root 'installer/CollectorTray.cs')
+if ($LASTEXITCODE -ne 0) { throw 'Collector tray build failed.' }
+Sign-PackageFile $tray
+
+$setup = Join-Path $bundle 'Setup-AI-Task-List.ps1'
+Copy-Item -LiteralPath (Join-Path $root 'installer/Setup-AI-Task-List.ps1') -Destination $setup -Force
+Sign-PackageFile $setup
+
+$browserArchive = & (Join-Path $root 'browser/build.ps1') -SigningThumbprint $SigningThumbprint -TimestampServer $TimestampServer
+$browserBundle = Join-Path $bundle 'browser'
+New-Item -ItemType Directory -Path $browserBundle -Force | Out-Null
+$browserPackage = Join-Path $browserArchive.DirectoryName $browserArchive.BaseName
+$browserFiles = @(
+  'AI-Task-List-Web.exe', 'Install-ChatGPT-Web.ps1', 'stores.json', 'README.md', 'PUBLICATION.md' |
+    ForEach-Object { Join-Path $browserPackage $_ }
+)
+Copy-Item -LiteralPath $browserFiles -Destination $browserBundle -Force
+
 $installerSource = [IO.File]::ReadAllText((Join-Path $root 'installer/Install-AI-Task-Collector.ps1'))
-foreach ($entry in @{ NODE = 'node.exe'; MAIN = 'main.cjs'; CODEX = 'codex.cjs'; CLIENTS_CODE = 'clients.cjs'; CLIENTS_CONFIG = 'clients.json'; USAGE = 'usage.cjs' }.GetEnumerator()) {
-  $hash = (Get-FileHash -LiteralPath (Join-Path $appDir $entry.Value) -Algorithm SHA256).Hash
+$payloads = @{
+  TRAY = 'app/AI-Task-Collector.exe'; NODE = 'app/node.exe'; MAIN = 'app/main.cjs'
+  CODEX = 'app/codex.cjs'; CLIENTS_CODE = 'app/clients.cjs'; CLIENTS_CONFIG = 'app/clients.json'; USAGE = 'app/usage.cjs'
+  BROWSER_SETUP = 'browser/Install-ChatGPT-Web.ps1'; BROWSER_RELAY = 'browser/AI-Task-List-Web.exe'
+}
+foreach ($entry in $payloads.GetEnumerator()) {
+  $hash = (Get-FileHash -LiteralPath (Join-Path $bundle $entry.Value) -Algorithm SHA256).Hash
   $installerSource = $installerSource.Replace(('__{0}_SHA256__' -f $entry.Key), $hash)
 }
 $installer = Join-Path $bundle 'Install-AI-Task-Collector.ps1'
 [IO.File]::WriteAllText($installer, $installerSource, $utf8)
 Sign-PackageFile $installer
+
 Copy-Item -LiteralPath (Join-Path $root 'README.md') -Destination $bundle -Force
 Copy-Item -LiteralPath (Join-Path $root 'README.fr.md') -Destination $bundle -Force
 Copy-Item -LiteralPath (Join-Path $root 'LICENSE') -Destination $bundle -Force
+Copy-Item -LiteralPath (Join-Path $root 'CHANGELOG.md') -Destination $bundle -Force
+Copy-Item -LiteralPath (Join-Path $root 'docs') -Destination $bundle -Recurse -Force
+$privacy = Join-Path $bundle 'PRIVACY.md'
+Copy-Item -LiteralPath (Join-Path $root 'PRIVACY.md') -Destination $privacy -Force
 $nodeNotice = Join-Path $bundle 'NODE-LICENSE.txt'
 if ($NodeLicense) {
   $licensePath = (Resolve-Path -LiteralPath $NodeLicense).Path
@@ -105,5 +182,5 @@ if ($NodeLicense) {
 
 $flavor = if ($SigningThumbprint) { 'signed' } else { 'unsigned-preview' }
 $archive = Join-Path $dist "AI-Task-List-$($manifest.version)-windows-$flavor.zip"
-Compress-Archive -LiteralPath $widgetPackage,$appDir,$installer,(Join-Path $bundle 'README.md'),(Join-Path $bundle 'README.fr.md'),(Join-Path $bundle 'LICENSE'),$nodeNotice -DestinationPath $archive -Force
+Compress-Archive -LiteralPath $widgetPackage,$appDir,$installer,$setup,$browserBundle,(Join-Path $bundle 'README.md'),(Join-Path $bundle 'README.fr.md'),(Join-Path $bundle 'CHANGELOG.md'),(Join-Path $bundle 'docs'),(Join-Path $bundle 'LICENSE'),$privacy,$nodeNotice -DestinationPath $archive -Force
 Get-FileHash -LiteralPath $archive -Algorithm SHA256

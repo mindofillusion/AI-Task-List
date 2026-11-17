@@ -1,0 +1,3 @@
+f71ee696862b0c518bfbe52999bc1ed1e64e2970564fe612cc3b61a0c703b969  AI-Task-List-2.2.0.icuewidget
+5fabae7cfe2ebe930123484c24d76897a1b424856f18af630e0adf701cb51615  AI-Task-List-2.2.0-windows-unsigned-preview.zip
+8b0e854464bdc171e836a2b0c0875e1e3c6e00e10dd133907e2435001edee362  AI-Task-List-Web-0.3.0-publication.zip

@@ -7,7 +7,7 @@ AI Task List affiche les tâches en cours et les résultats non lus. Il actualis
 ## Installer le widget
 
 1. Vérifiez que le XENEON EDGE apparaît dans iCUE sous Windows. Le widget nécessite iCUE 5.52 ou ultérieur.
-2. Téléchargez le [fichier AI-Task-List-2.1.0.icuewidget](https://raw.githubusercontent.com/mindofillusion/AI-Task-List/main/downloads/AI-Task-List-2.1.0.icuewidget).
+2. Téléchargez le [fichier AI-Task-List-2.2.0.icuewidget](https://raw.githubusercontent.com/mindofillusion/AI-Task-List/main/downloads/AI-Task-List-2.2.0.icuewidget).
 3. Dans iCUE, sélectionnez le XENEON EDGE, ouvrez la bibliothèque de widgets et utilisez le bouton **+** pour importer le fichier. Autorisez iCUE à lire `<Home>/AI-Task-List/tasks.json` lorsque la demande s’affiche. Ajoutez **AI Task List** à une page de l’écran. [Guide d’importation Corsair](https://www.corsair.com/uk/en/explorer/diy-builder/accessories/how-to-install-a-widget/)
 4. Démarrez le collecteur avec les [instructions du projet](../../README.fr.md#installer-sous-windows). Pour un essai depuis les sources, ouvrez PowerShell à la racine du dépôt avec Node.js 26 ou ultérieur et lancez la commande ci-dessous. Gardez la fenêtre ouverte pendant l’essai.
 
@@ -15,9 +15,7 @@ AI Task List affiche les tâches en cours et les résultats non lus. Il actualis
 node .\collector\main.cjs
 ```
 
-Pour suivre les tâches Codex, Work ou ChatGPT, ouvrez l’application de bureau dans la même session Windows. Une tâche lancée ailleurs devient visible dès que son état est disponible dans cette application.
-
-Le paquet a passé la validation de l’outil Corsair. L’essai sur l’écran physique reste à effectuer.
+Ouvrez l’application de bureau dans la même session Windows pour suivre l’activité que son catalogue local expose. Pour utiliser aussi la barre latérale du navigateur sur le PC du XENEON EDGE, suivez le [guide ChatGPT Web](../../browser/README.md). Une tâche lancée sur un autre appareil peut apparaître dès que la barre latérale du navigateur connecté l’affiche.
 
 ## Lire et personnaliser l’affichage
 
@@ -26,6 +24,8 @@ Le paquet a passé la validation de l’outil Corsair. L’essai sur l’écran 
 - À droite, le grand chrono affiche le temps de l’objectif lorsqu’il est disponible. Dans les autres cas, il cumule le temps de traitement depuis la dernière demande utilisateur.
 - Le pied de widget reste visible pendant le défilement. Il affiche le pourcentage utilisé pour chaque fenêtre du quota principal Codex / Work que le service renvoie, par exemple **5 h 32 % · 7 j 20 %**. Il se masque si le quota est indisponible. La durée affichée vient du service et peut varier selon le compte.
 - Les paramètres de personnalisation d’iCUE permettent de régler les couleurs, le fond et sa transparence.
+
+Une réorientation pendant une demande laisse le compteur total continuer. La liste conserve l’ordre des tâches et sa position de défilement pendant l’actualisation des chronos.
 
 ## Si aucune tâche ne s’affiche
 
@@ -36,6 +36,8 @@ Le paquet a passé la validation de l’outil Corsair. L’essai sur l’écran 
 | **Données Codex indisponibles** | Lancez l’application de bureau et vérifiez que le collecteur utilise le même compte Windows. |
 | **Aucun client de bureau actif** | Lancez ChatGPT / Codex Desktop ou un autre client déclaré dans `clients.json`. |
 | **Aucune tâche active** | Lancez une nouvelle demande ou attendez la remontée de l’état d’une tâche distante. |
+| **Collecteur absent de la barre des tâches** | Ouvrez la zone de notification près de l’horloge. Le collecteur tourne sans fenêtre dans la barre des tâches et son menu permet de le redémarrer. |
+| **Tâche visible sur ChatGPT mais absente d’iCUE** | Vérifiez que le suivi local est activé, que la barre latérale de l’onglet connecté montre la tâche et que le relais a été configuré pour ce navigateur. |
 
 ```powershell
 Get-Item -LiteralPath (Join-Path $env:USERPROFILE 'AI-Task-List\tasks.json') |
@@ -43,6 +45,8 @@ Get-Item -LiteralPath (Join-Path $env:USERPROFILE 'AI-Task-List\tasks.json') |
 ```
 
 Le widget lit ce fichier en local, sans port HTTP. Le [guide des fournisseurs](providers.md) décrit comment raccorder un autre assistant IA.
+
+La [page des limites d’affichage](limitations.md) détaille les champs disponibles, les contraintes du suivi à distance et les signalements transmis à OpenAI.
 
 ## Ajouter une langue
 

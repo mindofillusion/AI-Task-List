@@ -8,7 +8,7 @@ const { collectTasks, resolvePaths } = require("./codex.cjs");
 const { createClientDetector } = require("./clients.cjs");
 const { readQuota, REFRESH_MS } = require("./usage.cjs");
 
-const VERSION = "2.1.0";
+const VERSION = "2.2.0";
 const SOURCE_TTL_MS = 30_000;
 const MAX_SOURCE_BYTES = 256 * 1024;
 const MAX_TASKS = 100;
@@ -43,6 +43,7 @@ function publicTask(input, provider, fallbackSource) {
 
 function readExternalTasks(sourcesDir, now) {
   const tasks = [];
+  const browserRows = new Map();
   for (const entry of fs.readdirSync(sourcesDir, { withFileTypes: true })) {
     if (!entry.isFile() || !/^[a-z0-9][a-z0-9-]{0,49}\.json$/.test(entry.name) || entry.name === "codex.json") continue;
     const file = path.join(sourcesDir, entry.name);
@@ -55,6 +56,19 @@ function readExternalTasks(sourcesDir, now) {
           !Array.isArray(snapshot.tasks)) continue;
       const provider = path.basename(entry.name, ".json");
       for (const input of snapshot.tasks.slice(0, MAX_TASKS)) {
+        if (/^chatgpt-web-\d+$/.test(provider)) {
+          const id = input?.id;
+          const priority = ["idle", "completedUnread", "inProgress"].indexOf(input?.state);
+          if (typeof id !== "string" || !/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/.test(id) ||
+              priority < 0) continue;
+          // Prefer the most recent observation from a connected browser profile.
+          const current = browserRows.get(id);
+          if (!current || current.updatedAt < updatedAt ||
+              current.updatedAt === updatedAt && current.priority < priority) {
+            browserRows.set(id, { input, updatedAt, priority });
+          }
+          continue;
+        }
         const task = publicTask(input, provider, provider);
         if (task) tasks.push(task);
       }
@@ -62,7 +76,7 @@ function readExternalTasks(sourcesDir, now) {
       // A producer may be replacing its file. Read the next snapshot on the next tick.
     }
   }
-  return tasks;
+  return { tasks, browserRows };
 }
 
 function createCollector(outputDir, codexPaths, detectClients = () => ({ clientState: "unknown", clients: [] })) {
@@ -88,8 +102,23 @@ function createCollector(outputDir, codexPaths, detectClients = () => ({ clientS
       }
       lastCodexSuccess = codexAvailable;
     }
-    tasks.push(...readExternalTasks(sourcesDir, now));
-    const byId = new Map(tasks.map((task) => [task.id, task]));
+    const external = readExternalTasks(sourcesDir, now);
+    const byId = new Map([...tasks, ...external.tasks].map((task) => [task.id, task]));
+    for (const [id, { input }] of external.browserRows) {
+      const key = `codex:${id}`;
+      const existing = byId.get(key);
+      if (existing && existing.source !== "ChatGPT") continue;
+      if (input.state === "idle") {
+        byId.delete(key);
+      } else {
+        const task = publicTask({ id, title: input.title || existing?.title, state: input.state },
+          "codex", "ChatGPT");
+        byId.set(key, {
+          ...(existing?.state === task.state ? existing : task), title: task.title,
+          model: existing?.model ?? null, effort: existing?.effort ?? null
+        });
+      }
+    }
     const clientStatus = detectClients(now);
     const snapshot = {
       schemaVersion: 1,
@@ -117,12 +146,17 @@ async function main() {
     "output-dir": { type: "string", default: path.join(os.homedir(), "AI-Task-List") },
     "codex-dir": { type: "string" },
     "no-codex": { type: "boolean" },
+    supervised: { type: "boolean" },
     "once": { type: "boolean" },
     "version": { type: "boolean" }
   } });
   if (values.version) {
     console.log(VERSION);
     return;
+  }
+  if (values.supervised) {
+    process.stdin.once("end", () => process.exit(0));
+    process.stdin.resume();
   }
   const codexDirectory = values["codex-dir"] || process.env.CODEX_HOME;
   const paths = values["no-codex"] ? null : resolvePaths(codexDirectory);

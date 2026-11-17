@@ -1,4 +1,4 @@
-const APP_VERSION = "2.1.0";
+const APP_VERSION = "2.2.0";
 const SNAPSHOT_PATH = "{Home}/AI-Task-List/tasks.json";
 const SNAPSHOT_TIMEOUT = 15_000;
 const ACTIVE_ICON = "images/task-list.png";

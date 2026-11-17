@@ -155,7 +155,7 @@ try {
 
   insertUserMessage.run("turn-1", 3, 3, 180000, "mid-turn-request");
   current = activeRequest();
-  assert.equal(current.requestElapsedSeconds, 40);
+  assert.equal(current.requestElapsedSeconds, 120);
   assert.equal(current.requestTurnNumber, 1);
   assert.equal(current.elapsedSeconds, 120);
 
@@ -176,7 +176,7 @@ try {
   assert.equal(completed.state, "completedUnread");
   assert.equal(completed.elapsedSeconds, 100);
   const completedWithoutGoal = collectTasks(withoutGoals, 350000).tasks.find(({ id }) => id === "thread-1");
-  assert.equal(completedWithoutGoal.requestElapsedSeconds, 20);
+  assert.equal(completedWithoutGoal.requestElapsedSeconds, 100);
   assert.equal(completedWithoutGoal.requestTurnNumber, 1);
   assert(!afterCompletion.some(({ id }) => id === "chat-2"));
   setUnread([]);

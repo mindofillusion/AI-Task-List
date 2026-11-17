@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "AI Task List – ChatGPT Web",
+  "description": "Relays visible ChatGPT activity indicators to the local AI Task List collector.",
+  "version": "0.3.0",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2TlwXu9f/7cBZYSkOCy13/HlODwvVSqhL1h9pfvwmkRIKBvs70i/y99eQkcfoyI0cXLes8ApqkXbrbM1391110BcgJIN6q//29mdH4fUZJ9YWW1LKG7k9tsc16CQ8mgZ6Ctg8FuiYrgNZ3HAm6pgBx5eGEqoBsjUvWsC+sT4nexJUipZ9HpCmyUNs/qeHqSLz6a6NxmMzmwmZP8BajTpHI/7D0wy9CgmnPkuCI87aMDKeu0kIM2TaHe5KxhgXThH6Bx7QBWJ+T1uI7sbettm1G3rqYgE9i7/mtX74tz0OpXkna8JKdD5qcYa/E/P2KzhrzxNlE7AtlITZMuQTV0IzQIDAQAB",
+  "permissions": ["nativeMessaging", "storage"],
+  "incognito": "not_allowed",
+  "action": { "default_popup": "panel.html", "default_title": "AI Task List" },
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [{
+    "matches": ["https://chatgpt.com/*"],
+    "js": ["activity.js"],
+    "run_at": "document_idle"
+  }]
+}

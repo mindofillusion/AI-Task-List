@@ -86,7 +86,7 @@ async function readQuota(codexDirectory) {
     send({
       id: 1,
       method: "initialize",
-      params: { clientInfo: { name: "ai_task_list", title: "AI Task List", version: "2.1.0" } }
+      params: { clientInfo: { name: "ai_task_list", title: "AI Task List", version: "2.2.0" } }
     });
   });
 }

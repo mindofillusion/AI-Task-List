@@ -8,10 +8,14 @@ La ligne grise indique l’activité, le numéro du tour et sa durée. Le grand 
 
 <img width="845" height="354" alt="image" src="https://github.com/user-attachments/assets/129c2cc7-db78-4abd-9285-db86a49ec94b" /> <img width="845" height="349" alt="image" src="https://github.com/user-attachments/assets/25e46e2f-986c-4d89-8ed1-597afdc07f4d" />
 
-## Télécharger le widget
+## Téléchargements
 
-- [AI Task List 2.1.0 pour iCUE](https://raw.githubusercontent.com/mindofillusion/AI-Task-List/main/downloads/AI-Task-List-2.1.0.icuewidget)
-- [Guide d’installation et d’utilisation du widget](docs/fr/widget.md)
+- [AI Task List 2.2.0 pour iCUE](https://raw.githubusercontent.com/mindofillusion/AI-Task-List/main/downloads/AI-Task-List-2.2.0.icuewidget)
+- [Collecteur et widget 2.2.0 pour Windows, préversion non signée](https://raw.githubusercontent.com/mindofillusion/AI-Task-List/main/downloads/AI-Task-List-2.2.0-windows-unsigned-preview.zip)
+- [Guide d’installation et d’utilisation du widget](docs/fr/widget.md) et [limites d’affichage et tickets OpenAI](docs/fr/limitations.md)
+- [Guide ChatGPT Web](browser/README.md), [politique de confidentialité](PRIVACY.md#politique-de-confidentialité) et [dossier de soumission aux boutiques](https://raw.githubusercontent.com/mindofillusion/AI-Task-List/main/downloads/AI-Task-List-Web-0.3.0-publication.zip)
+- [Historique des versions](CHANGELOG.md)
+- [Empreintes SHA-256](https://raw.githubusercontent.com/mindofillusion/AI-Task-List/main/downloads/SHA256SUMS-2.2.0.txt)
 
 Le fichier `.icuewidget` s’importe directement dans iCUE. Pour alimenter l’affichage, démarrez le collecteur ou fournissez un fichier compatible au chemin indiqué dans le guide.
 
@@ -22,15 +26,21 @@ Il faut iCUE 5.52 ou ultérieur et un XENEON EDGE. Pour suivre Codex, ouvrez l�
 1. Extrayez l’archive Windows dans un dossier et vérifiez les signatures de l’installateur et du collecteur avec PowerShell.
 
    ```powershell
-   Get-AuthenticodeSignature .\Install-AI-Task-Collector.ps1, .\app\node.exe
+   Get-AuthenticodeSignature .\Setup-AI-Task-List.ps1, .\Install-AI-Task-Collector.ps1, .\app\AI-Task-Collector.exe, .\app\node.exe, .\browser\Install-ChatGPT-Web.ps1, .\browser\AI-Task-List-Web.exe
    ```
 
-   Une distribution signée doit indiquer `Valid` pour les deux fichiers. Le binaire Node.js porte la signature de l’OpenJS Foundation. Les archives nommées `unsigned-preview` sont des builds de développement dont le script d’installation est non signé.
+   Une distribution signée doit indiquer `Valid` pour chaque fichier. Le binaire Node.js porte la signature de l’OpenJS Foundation. Les archives nommées `unsigned-preview` contiennent des scripts et des exécutables du projet sans signature.
 
-2. Dans PowerShell, exécutez `.\Install-AI-Task-Collector.ps1`. Le collecteur démarre pour le compte courant et se relance à l’ouverture de session si Windows permet de créer le raccourci de démarrage. L’installateur attend une pression sur Entrée avant de se fermer ; ajoutez `-NoPause` pour une installation automatisée. Si l’installateur signale que le raccourci a échoué, réexécutez la commande pour démarrer le collecteur dans une nouvelle session. Ajoutez `-NoCodex` si vous voulez utiliser uniquement des fournisseurs externes.
-3. Importez `AI-Task-List-2.1.0.icuewidget` dans iCUE. Autorisez l’accès à `<Home>/AI-Task-List/tasks.json` lorsque iCUE le demande, puis ajoutez **AI Task List** à votre écran.
+2. Dans PowerShell, exécutez `.\Setup-AI-Task-List.ps1`. Le collecteur démarre pour le compte courant et se relance à l’ouverture de session si Windows permet de créer le raccourci de démarrage. L’installateur configure le relais ChatGPT Web pour les navigateurs détectés et ouvre les fiches des extensions publiées. Confirmez leur ajout dans le navigateur. Ajoutez `-Browser Brave` pour cibler un seul navigateur, `-SkipBrowser` pour installer uniquement le collecteur ou `-WhatIf` pour prévisualiser les actions. Le [guide ChatGPT Web](browser/README.md) décrit aussi l’installation dans un navigateur portable.
+3. Importez le fichier `.icuewidget` inclus dans iCUE. Autorisez l’accès à `<Home>/AI-Task-List/tasks.json` lorsque iCUE le demande, puis ajoutez **AI Task List** à votre écran. Le widget 2.1.0 déjà importé peut lire les données du nouveau collecteur.
 
 Le widget se rafraîchit à la prochaine mise à jour du fichier. Si le collecteur est indisponible, vérifiez la date de modification de `%USERPROFILE%\AI-Task-List\tasks.json` et l’autorisation de fichier dans iCUE.
+
+À partir du collecteur 2.1.1, l’icône **AI Task List Collector** se trouve dans la zone de notification Windows. Son menu permet de redémarrer ou de quitter le collecteur. L’application relance la collecte au réveil de Windows et lorsque le fichier cesse d’être mis à jour. Une réorientation pendant un tour laisse le chrono de la demande continuer. Le widget 2.1.0 déjà installé peut lire ces mises à jour.
+
+Pour ajouter le suivi de ChatGPT Web après installation, faites un clic droit sur l’icône du collecteur et choisissez **Installer l’extension ChatGPT Web**, puis votre navigateur ou **Tous les navigateurs détectés**. Une boîte de dialogue indique pour chacun si la fiche est ouverte ou si l’extension est encore en attente de publication. Les paquets de soumission 0.3.0 sont disponibles. Le menu pourra ouvrir les fiches après leur approbation et l’ajout de leurs identifiants au catalogue de l’installateur.
+
+L’application de bureau peut afficher une conversation ChatGPT comme active alors que cette activité est absente du catalogue local. Le widget l’affiche lorsque le collecteur reçoit un état actif ou non lu qu’il sait interpréter.
 
 Pour désinstaller le collecteur, exécutez `.\Install-AI-Task-Collector.ps1 -Uninstall`. Les fichiers des fournisseurs sont conservés dans `sources`. Retirez ensuite le widget de l’écran iCUE.
 
@@ -46,14 +56,14 @@ Le collecteur s’exécute avec les droits du compte Windows courant. L’adapta
 
 ## Construire et signer
 
-La construction nécessite le binaire Windows officiel de Node.js 26 ou ultérieur et le CLI Corsair `icuewidget` dans le PATH. Avec le CLI 0.5 ou ultérieur, la validation couvre aussi les permissions. Le build valide le widget, exécute les tests et place les fichiers dans `dist/`. Il joint la licence de la version de Node.js utilisée. Pour fournir cette licence depuis un fichier local, utilisez le paramètre `-NodeLicense`.
+La construction nécessite le binaire Windows officiel de Node.js 26 ou ultérieur, le compilateur C# du .NET Framework et le CLI Corsair `icuewidget` dans le PATH. Avec le CLI 0.5 ou ultérieur, la validation couvre aussi les permissions. Le build valide le widget, exécute les tests et place les fichiers dans `dist/`. Il joint la licence de la version de Node.js utilisée. Pour fournir cette licence depuis un fichier local, utilisez le paramètre `-NodeLicense`.
 
 ```powershell
 .\build.ps1
 .\build.ps1 -SigningThumbprint 'EMPREINTE_DU_CERTIFICAT'
 ```
 
-La seconde commande nécessite un certificat de signature de code approuvé par Windows dans le magasin personnel de l’utilisateur et sa clé privée. Le build vérifie la signature officielle de Node.js, inscrit les SHA-256 du binaire et des scripts du collecteur dans l’installateur, puis signe et vérifie l’installateur. Une erreur de signature interrompt le build signé.
+La seconde commande nécessite un certificat de signature de code approuvé par Windows dans le magasin personnel de l’utilisateur et sa clé privée. Le build vérifie la signature officielle de Node.js, signe les exécutables et les installateurs du projet, et inscrit les SHA-256 des fichiers du collecteur. Une erreur de signature interrompt le build signé. Le build produit aussi une archive séparée contenant les paquets d’extension à soumettre aux boutiques.
 
 - [Plugin File System d’iCUE](https://docs.elgato.com/icue/widgets/references/plugins/file-system-provider/)
 - [Créer un paquet iCUE](https://docs.elgato.com/icue/widgets/)

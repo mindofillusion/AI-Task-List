@@ -194,26 +194,24 @@ function collectTasks(paths = resolvePaths(), nowMs = Date.now()) {
       LIMIT 1
     `);
     const firstUserItem = turnColumns.has("first_user_item_id") ? "t.first_user_item_id" : "NULL";
+    // A steering message within a running turn does not start a new request.
     const requestBoundary = history.prepare(`
-      SELECT t.rollout_ordinal AS turn_ordinal,
-             CASE WHEN i.item_id = COALESCE(${firstUserItem}, (
+      SELECT t.rollout_ordinal AS turn_ordinal
+      FROM thread_turns AS t
+      WHERE t.thread_id = ? AND t.rollout_ordinal <= ?
+        AND COALESCE(${firstUserItem}, (
                SELECT first.item_id FROM thread_items AS first
                WHERE first.thread_id = t.thread_id AND first.turn_id = t.turn_id
                  AND first.item_type = 'userMessage'
                ORDER BY first.rollout_ordinal LIMIT 1
-             )) THEN NULL ELSE i.started_at_ms END AS cutoff_ms
-      FROM thread_turns AS t
-      JOIN thread_items AS i ON i.thread_id = t.thread_id AND i.turn_id = t.turn_id
-      WHERE t.thread_id = ? AND t.rollout_ordinal <= ? AND i.item_type = 'userMessage'
-      ORDER BY t.rollout_ordinal DESC, i.rollout_ordinal DESC
+              )) IS NOT NULL
+      ORDER BY t.rollout_ordinal DESC
       LIMIT 1
     `);
     const requestTurns = history.prepare(`
       SELECT COUNT(*) AS turn_count,
              SUM(CASE
                WHEN t.status = 'inProgress' THEN NULL
-               WHEN t.rollout_ordinal = $boundary AND $cutoff IS NOT NULL
-                 THEN MAX(0, ${recordedDuration} - MAX(0, $cutoff - t.started_at * 1000))
                ELSE ${recordedDuration}
              END) AS finished_ms
       FROM thread_turns AS t
@@ -261,14 +259,11 @@ function collectTasks(paths = resolvePaths(), nowMs = Date.now()) {
         const boundary = requestBoundary.get(row.thread_id, latest);
         if (boundary) {
           const request = requestTurns.get({
-            thread: row.thread_id, boundary: boundary.turn_ordinal, latest, cutoff: boundary.cutoff_ms
+            thread: row.thread_id, boundary: boundary.turn_ordinal, latest
           });
           requestTurnNumber = request.turn_count || null;
           const finishedMs = request.finished_ms;
-          let activeMs = completedUnread ? null : turnElapsedMs;
-          if (activeMs !== null && boundary.turn_ordinal === latest && boundary.cutoff_ms !== null) {
-            activeMs = Math.max(0, activeMs - Math.max(0, boundary.cutoff_ms - startedAtMs));
-          }
+          const activeMs = completedUnread ? null : turnElapsedMs;
           if (!goal && (finishedMs !== null || activeMs !== null)) {
             requestElapsedMs = (finishedMs ?? 0) + (activeMs ?? 0);
           }

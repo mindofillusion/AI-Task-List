@@ -1,0 +1,19 @@
+# AI Task List – ChatGPT Web privacy policy
+
+The extension lets you see which ChatGPT conversations are in progress or have an unread result. It starts with tracking off. If you enable it, the extension reads conversation identifiers, titles and activity indicators visible in the sidebar on `chatgpt.com`. The extension can show those titles and states in its browser panel. It uses the conversation identifier to match and remove entries as their state changes.
+
+The browser sends this limited data through native messaging to AI Task List Collector on the same Windows PC. The collector writes the current task list for the iCUE widget. The extension and the Web relay do not send this data to the publisher or to any remote service. They do not read message text, files, credentials, cookies, general browsing history or private browser windows. The extension uses no analytics or advertising.
+
+The browser stores the tracking preference locally in the current browser profile. The Windows relay writes the latest state to `%USERPROFILE%\AI-Task-List\sources\chatgpt-web-<pid>.json`. The collector updates `%USERPROFILE%\AI-Task-List\tasks.json`, which iCUE reads. These files contain the current state and are not a conversation archive. The relay removes its file when it closes normally. After an unexpected exit, the collector stops using the relay file once it is stale, but the file may remain on disk until deleted.
+
+To stop Web tracking, open the extension’s browser panel and choose **Disable local tracking**, or remove the extension. To delete the Web relay files, first stop tracking in every browser profile you use, then remove the `chatgpt-web-*.json` files from the folder above. The active collector rewrites its own task-list file, which may also reflect separate data from the desktop adapter. Questions can be submitted through the project’s public issue tracker. Avoid including private conversation information in public reports. [AI Task List support](https://github.com/mindofillusion/AI-Task-List/issues)
+
+## Politique de confidentialité
+
+Le suivi est désactivé à l’installation. Quand vous l’activez, l’extension lit les identifiants, les titres et les indicateurs d’activité visibles dans la barre latérale de `chatgpt.com`. Le panneau de l’extension affiche les conversations en cours et les résultats non lus. L’identifiant permet de mettre à jour ou de retirer l’entrée correspondante.
+
+L’extension envoie ces données au collecteur AI Task List sur le même PC Windows par la messagerie native du navigateur. Le collecteur alimente le widget iCUE. L’extension et son relais Web ne transmettent aucune de ces données à l’éditeur ni à un service distant. Ils n’accèdent ni au texte des messages, ni aux fichiers, aux identifiants de connexion, aux cookies, à l’historique général de navigation ou aux fenêtres privées. L’extension n’utilise ni publicité ni mesure d’audience.
+
+Le choix d’activer le suivi reste dans le profil local du navigateur. Le relais écrit l’état courant dans `%USERPROFILE%\AI-Task-List\sources\chatgpt-web-<pid>.json`. Le collecteur met à jour le fichier local `%USERPROFILE%\AI-Task-List\tasks.json` que lit iCUE. Le relais supprime son fichier à la fermeture normale. Après un arrêt inattendu, le collecteur ignore le fichier lorsqu’il devient ancien, mais il peut subsister sur le disque.
+
+Pour arrêter le suivi Web, choisissez **Désactiver le suivi local** dans le panneau de l’extension ou retirez l’extension. Pour supprimer les fichiers du relais, arrêtez d’abord le suivi dans tous les profils utilisés, puis supprimez les fichiers `chatgpt-web-*.json` du dossier indiqué. Le collecteur réécrit son fichier d’état, qui peut également contenir des données provenant de l’application de bureau. Pour poser une question, utilisez le suivi public du projet en évitant d’y joindre des données de conversation. [Assistance AI Task List](https://github.com/mindofillusion/AI-Task-List/issues)

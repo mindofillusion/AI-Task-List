@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Task List</title>
+  <link rel="stylesheet" href="panel.css">
+  <script src="panel.js" defer></script>
+</head>
+<body>
+  <main>
+    <h1>AI Task List</h1>
+    <p id="disclosure">When you enable tracking, the extension reads the titles, identifiers and activity indicators shown in your ChatGPT sidebar. It sends them to AI Task List Collector on this PC for the iCUE widget. The publisher receives no conversation data.</p>
+    <button id="toggle" type="button" aria-describedby="disclosure" disabled>Enable local tracking</button>
+    <p id="status" role="status"></p>
+    <ul id="tasks" aria-label="ChatGPT activity" hidden></ul>
+    <a id="help" href="https://github.com/mindofillusion/AI-Task-List/tree/main/browser" target="_blank" rel="noopener noreferrer">Windows setup and privacy</a>
+  </main>
+</body>
+</html>

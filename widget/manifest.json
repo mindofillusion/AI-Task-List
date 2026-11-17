@@ -3,7 +3,7 @@
   "id": "fr.pierrechevalier.aitasklist",
   "name": "AI Task List",
   "description": "Tâches actives et résultats non lus de Codex et d’autres assistants, lus depuis un fichier local.",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "preview_icon": "images/task-list.png",
   "min_app_version": "5.52",
   "min_framework_version": "1.9.0",
